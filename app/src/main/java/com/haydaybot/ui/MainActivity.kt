@@ -1,4 +1,3 @@
-
 package com.haydaybot.ui
 
 import android.app.Activity
@@ -21,17 +20,25 @@ import com.haydaybot.utils.BotLogger
 import com.haydaybot.utils.BotStats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.opencv.android.OpenCVLoader
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
+
     private var screenshotResultCode: Int = -1
     private var screenshotData: Intent? = null
 
-    private lateinit var switchCrops: com.google.android.material.switchmaterial.SwitchMaterial
-    private lateinit var switchAnimals: com.google.android.material.switchmaterial.SwitchMaterial
-    private lateinit var switchFactory: com.google.android.material.switchmaterial.SwitchMaterial
-    private lateinit var switchOrders: com.google.android.material.switchmaterial.SwitchMaterial
+    private var openCvReady = false
+
+    private lateinit var switchCrops:
+        com.google.android.material.switchmaterial.SwitchMaterial
+    private lateinit var switchAnimals:
+        com.google.android.material.switchmaterial.SwitchMaterial
+    private lateinit var switchFactory:
+        com.google.android.material.switchmaterial.SwitchMaterial
+    private lateinit var switchOrders:
+        com.google.android.material.switchmaterial.SwitchMaterial
 
     private val screenshotPermLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -39,8 +46,10 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             screenshotResultCode = result.resultCode
             screenshotData = result.data
+
             b.btnScreenshot.backgroundTintList =
                 getColorStateList(android.R.color.holo_green_dark)
+
             b.btnScreenshot.text = "✓ Screenshot Permission Granted"
             addLog("Screenshot permission granted ✓")
         }
@@ -52,7 +61,20 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        // Access included layouts through ViewBinding
+        // Initialize OpenCV before image processing
+        openCvReady = try {
+            OpenCVLoader.initDebug()
+        } catch (e: Exception) {
+            addLog("OpenCV initialization error: ${e.message}")
+            false
+        }
+
+        if (openCvReady) {
+            addLog("OpenCV loaded successfully ✓")
+        } else {
+            addLog("ERROR: OpenCV failed to load!")
+        }
+
         switchCrops = b.toggleCrops.switchTask
         switchAnimals = b.toggleAnimals.switchTask
         switchFactory = b.toggleFactory.switchTask
@@ -77,8 +99,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
+
         b.btnAccessibility.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            startActivity(
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            )
         }
 
         b.btnOverlay.setOnClickListener {
@@ -92,16 +117,30 @@ class MainActivity : AppCompatActivity() {
 
         b.btnScreenshot.setOnClickListener {
             val mpm =
-                getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            screenshotPermLauncher.launch(mpm.createScreenCaptureIntent())
+                getSystemService(MEDIA_PROJECTION_SERVICE)
+                    as MediaProjectionManager
+
+            screenshotPermLauncher.launch(
+                mpm.createScreenCaptureIntent()
+            )
         }
 
         b.btnStartStop.setOnClickListener {
-            if (BotAccessibilityService.isRunning) stopBot() else startBot()
+            if (BotAccessibilityService.isRunning) {
+                stopBot()
+            } else {
+                startBot()
+            }
         }
     }
 
     private fun startBot() {
+
+        if (!openCvReady) {
+            addLog("Cannot start: OpenCV is not loaded!")
+            return
+        }
+
         val svc = BotAccessibilityService.instance
             ?: run {
                 addLog("⚠ Enable Accessibility first!")
@@ -115,12 +154,20 @@ class MainActivity : AppCompatActivity() {
 
         startForegroundService(
             Intent(this, ScreenshotService::class.java).apply {
-                putExtra(ScreenshotService.EXTRA_CODE, screenshotResultCode)
-                putExtra(ScreenshotService.EXTRA_DATA, screenshotData)
+                putExtra(
+                    ScreenshotService.EXTRA_CODE,
+                    screenshotResultCode
+                )
+                putExtra(
+                    ScreenshotService.EXTRA_DATA,
+                    screenshotData
+                )
             }
         )
 
-        startForegroundService(Intent(this, BotForegroundService::class.java))
+        startForegroundService(
+            Intent(this, BotForegroundService::class.java)
+        )
 
         svc.startBot(
             BotConfig(
@@ -136,13 +183,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopBot() {
+
         BotAccessibilityService.instance?.stopBot()
-        stopService(Intent(this, BotForegroundService::class.java))
+
+        stopService(
+            Intent(this, ScreenshotService::class.java)
+        )
+
+        stopService(
+            Intent(this, BotForegroundService::class.java)
+        )
+
         refreshStartStopButton()
         addLog("Bot stopped ■")
     }
 
     private fun observeStats() {
+
         lifecycleScope.launch {
             BotStats.harvests.collectLatest {
                 b.tvHarvests.text = it.toString()
@@ -164,6 +221,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             BotStats.taskLabel.collectLatest {
                 b.tvCurrentTask.text = it
+
                 b.tvStatus.text =
                     if (BotAccessibilityService.isRunning) {
                         "Running — $it"
@@ -175,6 +233,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeLogs() {
+
         lifecycleScope.launch {
             BotLogger.logFlow.collectLatest {
                 addLog(it)
@@ -183,12 +242,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addLog(line: String) {
+
         runOnUiThread {
-            val lines = b.tvLog.text.toString().split("\n").takeLast(60)
-            b.tvLog.text = (lines + line).joinToString("\n")
+
+            val lines =
+                b.tvLog.text.toString().split("\n").takeLast(60)
+
+            b.tvLog.text =
+                (lines + line).joinToString("\n")
 
             val layout = b.tvLog.layout ?: return@runOnUiThread
-            val scrollY = layout.getLineTop(b.tvLog.lineCount) - b.tvLog.height
+
+            val scrollY =
+                layout.getLineTop(b.tvLog.lineCount) - b.tvLog.height
 
             if (scrollY > 0) {
                 b.tvLog.scrollTo(0, scrollY)
@@ -197,6 +263,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshPermissionButtons() {
+
         val a = BotAccessibilityService.instance != null
 
         b.btnAccessibility.backgroundTintList =
@@ -223,6 +290,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshStartStopButton() {
+
         val r = BotAccessibilityService.isRunning
 
         b.btnStartStop.text =
