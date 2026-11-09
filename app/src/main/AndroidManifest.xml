@@ -1,14 +1,18 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <application
@@ -19,7 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HayDayBot">
 
-        <!-- ── Main Activity ── -->
+        <!-- Main Activity -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -30,7 +34,7 @@
             </intent-filter>
         </activity>
 
-        <!-- ── Accessibility Service (core bot engine) ── -->
+        <!-- Accessibility Service -->
         <service
             android:name=".service.BotAccessibilityService"
             android:exported="true"
@@ -44,13 +48,13 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- ── Foreground Service (keeps bot alive) ── -->
+        <!-- Foreground Service -->
         <service
             android:name=".service.BotForegroundService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
-        <!-- ── Screenshot Service ── -->
+        <!-- Screenshot Service -->
         <service
             android:name=".service.ScreenshotService"
             android:exported="false"
