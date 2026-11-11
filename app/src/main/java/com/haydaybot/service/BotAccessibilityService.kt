@@ -69,12 +69,9 @@ class BotAccessibilityService : AccessibilityService() {
         BotLogger.i("Scheduler", "Bot started")
         BotStats.setTask("Starting…")
 
-        val tasks = buildList {
-            if (config.cropsEnabled)   add(CropTask(input, vision, config))
-            if (config.animalsEnabled) add(AnimalTask(input, vision, config))
-            if (config.factoryEnabled) add(FactoryTask(input, vision, config))
-            if (config.ordersEnabled)  add(OrdersTask(input, vision, config))
-        }
+        // This branch is intentionally diagnostic-only: never schedule tasks that
+        // can tap or swipe in the game while checking crop recognition.
+        val tasks = listOf(CropTask(input, vision, config))
 
         var lastIdleBreak = System.currentTimeMillis()
 
