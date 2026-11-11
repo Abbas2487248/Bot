@@ -73,17 +73,7 @@ class BotAccessibilityService : AccessibilityService() {
         // can tap or swipe in the game while checking crop recognition.
         val tasks = listOf(CropTask(input, vision, config))
 
-        var lastIdleBreak = System.currentTimeMillis()
-
         while (isRunning) {
-            val now = System.currentTimeMillis()
-
-            // Anti-ban idle break
-            if (now - lastIdleBreak >= config.idleFrequencyMs) {
-                doIdleBreak()
-                lastIdleBreak = System.currentTimeMillis()
-            }
-
             var anyRan = false
             for (task in tasks) {
                 if (!isRunning) break
