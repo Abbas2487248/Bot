@@ -2,7 +2,7 @@ name: Build Hay Day Bot APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, diagnostic/crop-vision-safe ]
   workflow_dispatch:
 
 jobs:
