@@ -34,9 +34,16 @@ class ScreenshotService : Service() {
         const val EXTRA_DATA = "result_data"
 
         private val _lastBitmap = MutableStateFlow<Bitmap?>(null)
+        private val bitmapLock = Any()
         val lastBitmap = _lastBitmap.asStateFlow()
 
-        fun getFrame(): Bitmap? = _lastBitmap.value
+        // Return a private snapshot. The capture thread may replace/recycle its
+        // latest frame at any time, so consumers must never receive that bitmap.
+        fun getFrame(): Bitmap? = synchronized(bitmapLock) {
+            _lastBitmap.value?.let { frame ->
+                if (!frame.isRecycled) frame.copy(Bitmap.Config.ARGB_8888, false) else null
+            }
+        }
     }
 
     private var projection: MediaProjection? = null
@@ -163,13 +170,16 @@ class ScreenshotService : Service() {
                         screenHeight
                     )
 
-                    val oldBitmap = _lastBitmap.value
-                    _lastBitmap.value = cropped
+                    synchronized(bitmapLock) {
+                        val oldBitmap = _lastBitmap.value
+                        _lastBitmap.value = cropped
+
+                        if (oldBitmap != null && !oldBitmap.isRecycled) {
+                            oldBitmap.recycle()
+                        }
+                    }
 
                     bitmap.recycle()
-                    if (oldBitmap != null && !oldBitmap.isRecycled) {
-                        oldBitmap.recycle()
-                    }
 
                 } catch (e: Exception) {
                     android.util.Log.e(
