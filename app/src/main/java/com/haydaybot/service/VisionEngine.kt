@@ -61,6 +61,32 @@ class VisionEngine(private val context: Context) {
         )
     }
 
+    /**
+     * Read-only diagnostic: reports template availability, dimensions and best score.
+     * This method never performs input actions.
+     */
+    fun diagnose(screen: Bitmap, category: String, name: String): String {
+        val screenMat = bitmapToMat(screen)
+        val tplMat = loadTemplate(category, name)
+            ?: return "$name: TEMPLATE_MISSING"
+        try {
+            if (tplMat.cols() > screenMat.cols() || tplMat.rows() > screenMat.rows()) {
+                return "$name: TEMPLATE_TOO_LARGE template=${tplMat.cols()}x${tplMat.rows()} screen=${screenMat.cols()}x${screenMat.rows()}"
+            }
+            val result = Mat()
+            try {
+                Imgproc.matchTemplate(screenMat, tplMat, result, Imgproc.TM_CCOEFF_NORMED)
+                val score = Core.minMaxLoc(result).maxVal
+                val status = if (score >= confidenceThreshold) "MATCH" else "BELOW_THRESHOLD"
+                return "$name: $status score=${"%.3f".format(java.util.Locale.US, score)} threshold=$confidenceThreshold template=${tplMat.cols()}x${tplMat.rows()} screen=${screenMat.cols()}x${screenMat.rows()}"
+            } finally {
+                result.release()
+            }
+        } finally {
+            screenMat.release()
+        }
+    }
+
     // ── Template loading ──────────────────────────────────────────────────────
 
     private fun loadTemplate(category: String, name: String): Mat? {
