@@ -67,9 +67,9 @@ class VisionEngine(private val context: Context) {
      */
     fun diagnose(screen: Bitmap, category: String, name: String): String {
         val screenMat = bitmapToMat(screen)
-        val tplMat = loadTemplate(category, name)
-            ?: return "$name: TEMPLATE_MISSING"
         try {
+            val tplMat = loadTemplate(category, name)
+                ?: return "$name: TEMPLATE_MISSING"
             if (tplMat.cols() > screenMat.cols() || tplMat.rows() > screenMat.rows()) {
                 return "$name: TEMPLATE_TOO_LARGE template=${tplMat.cols()}x${tplMat.rows()} screen=${screenMat.cols()}x${screenMat.rows()}"
             }
