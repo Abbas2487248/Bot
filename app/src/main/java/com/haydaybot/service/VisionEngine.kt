@@ -175,9 +175,22 @@ class VisionEngine(private val context: Context) {
     // ── Util ──────────────────────────────────────────────────────────────────
 
     private fun bitmapToMat(bmp: Bitmap): Mat {
+        // Always convert from a fresh mutable software bitmap. Screenshot frames
+        // are shared across diagnostic checks and may be immutable snapshots;
+        // OpenCV's AndroidBitmap_lockPixels can fail on those source instances.
+        require(!bmp.isRecycled) { "Screenshot bitmap was recycled before conversion" }
+        val safeBitmap = bmp.copy(Bitmap.Config.ARGB_8888, true)
+            ?: throw IllegalStateException("Could not create mutable screenshot copy")
         val mat = Mat()
-        Utils.bitmapToMat(bmp, mat)
-        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2BGR)
-        return mat
+        try {
+            Utils.bitmapToMat(safeBitmap, mat)
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2BGR)
+            return mat
+        } catch (e: Exception) {
+            mat.release()
+            throw e
+        } finally {
+            if (!safeBitmap.isRecycled) safeBitmap.recycle()
+        }
     }
 }
