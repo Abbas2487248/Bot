@@ -20,17 +20,19 @@ class CropTask(
     override suspend fun run() {
         log("── Read-only crop diagnosis start ──")
         var frameReceived = false
+        var frame: android.graphics.Bitmap? = null
         try {
             // MediaProjection delivers its first frame asynchronously after the
             // virtual display is created. Wait briefly instead of failing instantly.
-            var bmp = screen()
+            frame = screen()
             var attempts = 0
-            while (bmp == null && attempts < 30) {
+            while (frame == null && attempts < 30) {
                 delay(200)
-                bmp = screen()
+                frame = screen()
                 attempts++
             }
 
+            val bmp = frame
             if (bmp == null) {
                 warn("No screenshot frame after 6s — capture service did not deliver a frame")
                 return
@@ -52,6 +54,7 @@ class CropTask(
             // If capture has not produced a frame, leave the task due so the
             // scheduler can retry instead of sleeping for the full crop cycle.
             if (frameReceived) markDone()
+            frame?.let { if (!it.isRecycled) it.recycle() }
             log("── Read-only crop diagnosis done; no touches sent ──")
         }
     }
