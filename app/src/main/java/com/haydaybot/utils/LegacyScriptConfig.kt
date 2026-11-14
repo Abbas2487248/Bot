@@ -20,14 +20,14 @@ data class LegacyScriptConfig(
 ) {
     init {
         require(runMethod in 1..2) { "runMethod must be 1 or 2" }
-        require(totalFarms >= 1) { "totalFarms must be at least 1" }
-        require(layout >= 1) { "layout must be a positive layout id" }
-        require(field >= 1) { "field must be a positive field id" }
-        require(trays >= 1) { "trays must be a positive tray id" }
-        require(price >= 1) { "price must be a positive price preset id" }
+        require(totalFarms in 1..11) { "totalFarms must be between 1 and 11" }
+        require(layout in 1..2) { "layout must be 1 (classic) or 2 (new)" }
+        require(field in 1..5) { "field must be between 1 and 5" }
+        require(trays in 0..3) { "trays must be between 0 and 3" }
+        require(price in 0..2) { "price must be between 0 and 2" }
         require(squirrel in 0..1) { "squirrel must be 0 or 1" }
-        require(beehiveTree in 0..1) { "beehiveTree must be 0 or 1" }
-        require(honeyExtractor in 0..1) { "honeyExtractor must be 0 or 1" }
+        require(beehiveTree in 0..2) { "beehiveTree must be 0, 1, or 2" }
+        require(honeyExtractor in 0..2) { "honeyExtractor must be 0, 1, or 2" }
     }
 
     val usesCloneFarm: Boolean get() = runMethod == 2
@@ -36,8 +36,12 @@ data class LegacyScriptConfig(
     val honeyExtractorEnabled: Boolean get() = honeyExtractor == 1
 
     /** Field 1 is the wheat field in the supplied original script. */
-    val selectedCropName: String? get() = when (field) {
+    val selectedCropName: String get() = when (field) {
         1 -> "wheat"
-        else -> null // Other legacy field IDs are mapped when their script section is ported.
+        2 -> "corn"
+        3 -> "carrot"
+        4 -> "soybean"
+        5 -> "sugarcane"
+        else -> error("Unsupported field: $field")
     }
 }
