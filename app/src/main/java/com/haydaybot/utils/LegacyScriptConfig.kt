@@ -34,4 +34,10 @@ data class LegacyScriptConfig(
     val squirrelEnabled: Boolean get() = squirrel == 1
     val beehiveTreeEnabled: Boolean get() = beehiveTree == 1
     val honeyExtractorEnabled: Boolean get() = honeyExtractor == 1
+
+    /** Field 1 is the wheat field in the supplied original script. */
+    val selectedCropName: String? get() = when (field) {
+        1 -> "wheat"
+        else -> null // Other legacy field IDs are mapped when their script section is ported.
+    }
 }
