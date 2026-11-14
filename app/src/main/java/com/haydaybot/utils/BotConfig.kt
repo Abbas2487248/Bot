@@ -5,6 +5,9 @@ package com.haydaybot.utils
  * In the APK, settings are stored in SharedPreferences.
  */
 data class BotConfig(
+    // Original HiroMacro script settings, retained for the Kotlin task engine.
+    val legacyScript: LegacyScriptConfig = LegacyScriptConfig(),
+
     // Task toggles
     val cropsEnabled: Boolean = true,
     val animalsEnabled: Boolean = true,
