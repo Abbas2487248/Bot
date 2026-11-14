@@ -2,6 +2,8 @@ name: Build Hay Day Bot APK
 
 on:
   push:
+    branches: [ main, feature/smart-vision-foundation ]
+  pull_request:
     branches: [ main ]
   workflow_dispatch:
 

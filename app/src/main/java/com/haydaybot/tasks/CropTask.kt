@@ -59,7 +59,8 @@ class CropTask(
             tapMatch(empty)
             delay(400)
 
-            for (crop in config.cropList) {
+            val cropPriority = listOf(config.legacyScript.selectedCropName)
+            for (crop in cropPriority) {
                 val seedScreen = screen() ?: return
                 val seed = vision.find(seedScreen, "crops", "seed_$crop")
                 if (seed != null) {
